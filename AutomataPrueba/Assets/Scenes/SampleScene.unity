@@ -480,6 +480,12 @@ MonoBehaviour:
   vel: 0.05
   halfAngle: 30
   coneDistance: 5
+  battleDistance: 2
+  actualAngle: 0
+  randAngle: 0
+  totalAngle: 0
+  initAngle: 0
+  leftRight: 0
 --- !u!114 &1814925654
 MonoBehaviour:
   m_ObjectHideFlags: 0

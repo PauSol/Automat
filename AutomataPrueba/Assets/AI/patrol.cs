@@ -17,6 +17,21 @@ public class patrol : AI_Agent
     public float vel;
     public float halfAngle;
     public float coneDistance;
+    public float battleDistance;
+
+
+    float probIdle = 15f;
+    float probOrbit = 25f;
+    float totalProb;
+    float rand;
+
+    public float actualAngle;
+    public float randAngle;
+    public float totalAngle;
+    public float initAngle;
+    public int leftRight;
+
+
 
     Color gizmoColor;
 
@@ -98,8 +113,85 @@ public class patrol : AI_Agent
 
     void playerDetected()
     {
+ 
         rotateTo(player.position);
         gizmoColor = Color.red;
+        if (Vector3.Distance(transform.position, player.position) <= battleDistance)
+        {
+            totalProb = probIdle + probOrbit;
+            rand = Random.Range(0, totalProb);
+            setState(getState("battle"));
+        }
+
+    }
+    
+    void runFromPlayer()
+    {
+        float reversePlayer = -transform.forward.z;
+        Vector3 runFrom = new Vector3(player.position.x, player.position.y, reversePlayer);
+        rotateTo(runFrom);
+        if (Vector3.Distance(transform.position, player.position) > 6)
+            setState(getState("nextwp"));
+
+        gizmoColor = Color.yellow;
+    }
+
+    void idleBattle()
+    {
+
+        //if (rand <= probIdle)
+        //{
+        //    //esperar 2 seg
+        //    setState(getState("orbit"));
+        //}
+        if (rand <= probOrbit + probIdle)
+        {
+            initAngle = transform.rotation.eulerAngles.y;
+            actualAngle = transform.rotation.eulerAngles.y;
+            randAngle = Random.Range(30, 90);
+            leftRight = Random.Range(0, 2);
+            totalAngle = initAngle + randAngle;
+            actualAngle = transform.rotation.eulerAngles.y;
+            setState(getState("orbit"));
+        }
+
+    }
+
+    void orbit()
+    {
+        if(leftRight == 0)
+            orbitLeft();
+        else
+            orbitRight();
+
+    }
+    void orbitRight()
+    {
+
+     
+        float angleToGo = Mathf.Min(angularVelocity - 9, randAngle);
+        actualAngle = actualAngle - angleToGo;
+        transform.position = battleDistance * transform.forward;
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, actualAngle, transform.rotation.eulerAngles.z);
+        transform.position = battleDistance * -transform.forward;
+
+        if (actualAngle <= totalAngle)
+            setState(getState("battle"));
+
+    }
+
+    void orbitLeft()
+    {
+
+        float angleToGo = Mathf.Min(angularVelocity - 9, randAngle);
+        actualAngle = actualAngle + angleToGo;
+        transform.position = battleDistance * transform.forward;
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, actualAngle, transform.rotation.eulerAngles.z);
+        transform.position = battleDistance * -transform.forward;
+
+        if (actualAngle >= totalAngle)
+            setState(getState("battle"));
+
     }
 
     // Start is called before the first frame update
@@ -111,7 +203,9 @@ public class patrol : AI_Agent
         initState("goto", goToWaypoint);
         initState("nextwp", calculateNextWaypoint);
         initState("goplayer", playerDetected);
-        
+        initState("battle", idleBattle);
+        initState("orbit", orbit);
+
         setState(getState("idle"));
     }
 
@@ -129,4 +223,6 @@ public class patrol : AI_Agent
         transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y + angleGoTo, transform.rotation.eulerAngles.z);
         transform.position += transform.forward * vel;
     }
+
+
 }
