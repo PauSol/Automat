@@ -22,15 +22,29 @@ public class patrol : AI_Agent
 
     float probIdle = 15f;
     float probOrbit = 25f;
+    float probFight = 40f;
     float totalProb;
+    [SerializeField]
     float rand;
 
-    public float actualAngle;
-    public float randAngle;
-    public float totalAngle;
-    public float initAngle;
-    public int leftRight;
+    float actualAngle;
+    float randAngle;
+    float totalAngle;
+    float initAngle;
+    int leftRight;
 
+    [SerializeField]
+    float seconds = 0f;
+    float timerStill = 1f;
+
+    float randFight;
+    float probAttack1 = 30f;
+    float probAttack2 = 25f;
+    float probCombo1 = 10f;
+    float totalProbAttack;
+    float timerAttack1 = 0.5f;
+    float timerAttack2 = 0.8f;
+    float timerCombo1 = 2.0f;
 
 
     Color gizmoColor;
@@ -118,8 +132,7 @@ public class patrol : AI_Agent
         gizmoColor = Color.red;
         if (Vector3.Distance(transform.position, player.position) <= battleDistance)
         {
-            totalProb = probIdle + probOrbit;
-            rand = Random.Range(0, totalProb);
+            totalProb = probIdle + probOrbit + probFight;
             setState(getState("battle"));
         }
 
@@ -138,37 +151,63 @@ public class patrol : AI_Agent
 
     void idleBattle()
     {
+        rand = Random.Range(0, totalProb);
 
-        //if (rand <= probIdle)
-        //{
-        //    //esperar 2 seg
-        //    setState(getState("orbit"));
-        //}
-        if (rand <= probOrbit + probIdle)
+        if (rand <= probIdle)
         {
+            Debug.Log("Waiting...");
+            setState(getState("stay"));
+        }
+        else if (rand <= probOrbit + probIdle)
+        {
+            Debug.Log("Orbiting");
             initAngle = transform.rotation.eulerAngles.y;
             actualAngle = transform.rotation.eulerAngles.y;
             randAngle = Random.Range(30, 90);
             leftRight = Random.Range(0, 2);
-            totalAngle = initAngle + randAngle;
-            actualAngle = transform.rotation.eulerAngles.y;
             setState(getState("orbit"));
+        }
+        else if (rand <= probOrbit + probIdle + probFight)
+        {
+            //Fight
+            Debug.Log("Fighting");
+            totalProbAttack = probAttack1 + probAttack2 + probCombo1;
+            randFight = Random.Range(0, totalProbAttack);
         }
 
     }
 
+    void stayStill()
+    {
+        gizmoColor = Color.cyan;
+        if (seconds < timerStill)
+            seconds += Time.deltaTime;
+        else
+        {
+            seconds = 0f;
+            setState(getState("battle"));
+        }
+    }
+
+
     void orbit()
     {
-        if(leftRight == 0)
+        gizmoColor = Color.magenta;
+
+        if (leftRight == 0)
+        {
             orbitLeft();
+            totalAngle = initAngle + randAngle;
+        }
         else
+        {
             orbitRight();
+            totalAngle = initAngle - randAngle;
+        }
 
     }
     void orbitRight()
     {
-
-     
         float angleToGo = Mathf.Min(angularVelocity - 9, randAngle);
         actualAngle = actualAngle - angleToGo;
         transform.position = battleDistance * transform.forward;
@@ -194,6 +233,82 @@ public class patrol : AI_Agent
 
     }
 
+    void fight()
+    {
+        if (randFight <= probAttack1)
+        {
+            //Attack1
+        }
+        else if (randFight <= probAttack1 + probAttack2)
+        {
+            //Attack2
+        }
+        else if (randFight <= totalProbAttack)
+        {
+            //Combo
+        }
+    }
+
+    void attack1()
+    {
+        gizmoColor = Color.black;
+
+        if (seconds < timerAttack1)
+        {
+            seconds += Time.deltaTime;
+            //Attack1
+        }
+        else
+        {
+            seconds = 0f;
+            setState(getState("battle"));
+        }
+    }
+
+    void attack2()
+    {
+        gizmoColor = Color.black;
+
+        if (seconds < timerAttack2)
+        {
+            seconds += Time.deltaTime;
+            //Attack2
+        }
+        else
+        {
+            seconds = 0f;
+            setState(getState("battle"));
+        }
+    }
+
+    void combo1()
+    {
+        gizmoColor = Color.black;
+
+        float actualPercent;
+
+        if (seconds > timerCombo1)
+        {
+            seconds += Time.deltaTime;
+            actualPercent = seconds * 100 / timerCombo1;
+
+            //if(seconds >= 0.3 * (timerCombo1 + timerAttack2) && seconds <= 0.5
+            if (actualPercent <= 30)
+            {
+                //Attack1
+            }
+            else if (actualPercent >= 50)
+            {
+                //Attack2
+            }
+        }
+        else
+        {
+            seconds = 0f;
+            setState(getState("battle"));
+        }
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -204,7 +319,9 @@ public class patrol : AI_Agent
         initState("nextwp", calculateNextWaypoint);
         initState("goplayer", playerDetected);
         initState("battle", idleBattle);
+        initState("stay", stayStill);
         initState("orbit", orbit);
+        initState("fight", orbit);
 
         setState(getState("idle"));
     }
@@ -212,7 +329,7 @@ public class patrol : AI_Agent
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(Vector3.Distance(transform.position, waypoints[actualWaypoint]));
+        //Debug.Log(Vector3.Distance(transform.position, waypoints[actualWaypoint]));
     }
 
     void rotateTo(Vector3 target)

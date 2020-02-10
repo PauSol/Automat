@@ -24,7 +24,7 @@ public class prueba : MonoBehaviour
     }
     public void Update()
     {
-        Debug.Log(ManhattanDistance(transform.position, target.transform.position));
+        //Debug.Log(ManhattanDistance(transform.position, target.transform.position));
     }
 
 }
