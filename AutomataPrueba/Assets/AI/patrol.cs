@@ -24,7 +24,6 @@ public class patrol : AI_Agent
     float probOrbit = 25f;
     float probFight = 40f;
     float totalProb;
-    [SerializeField]
     float rand;
 
     float actualAngle;
@@ -37,6 +36,7 @@ public class patrol : AI_Agent
     float seconds = 0f;
     float timerStill = 1f;
 
+    [SerializeField]
     float randFight;
     float probAttack1 = 30f;
     float probAttack2 = 25f;
@@ -44,8 +44,9 @@ public class patrol : AI_Agent
     float totalProbAttack;
     float timerAttack1 = 0.5f;
     float timerAttack2 = 0.8f;
-    float timerCombo1 = 2.0f;
 
+    [SerializeField]
+    bool attacked = false;
 
     Color gizmoColor;
 
@@ -171,8 +172,11 @@ public class patrol : AI_Agent
         {
             //Fight
             Debug.Log("Fighting");
+            seconds = 0f;
+            attacked = false;
             totalProbAttack = probAttack1 + probAttack2 + probCombo1;
             randFight = Random.Range(0, totalProbAttack);
+            setState(getState("fight"));
         }
 
     }
@@ -183,10 +187,7 @@ public class patrol : AI_Agent
         if (seconds < timerStill)
             seconds += Time.deltaTime;
         else
-        {
-            seconds = 0f;
             setState(getState("battle"));
-        }
     }
 
 
@@ -235,17 +236,24 @@ public class patrol : AI_Agent
 
     void fight()
     {
+
+
+        attacked = false;
+
         if (randFight <= probAttack1)
         {
             //Attack1
+            attack1();
         }
         else if (randFight <= probAttack1 + probAttack2)
         {
             //Attack2
+            attack2();
         }
         else if (randFight <= totalProbAttack)
         {
             //Combo
+            combo1();
         }
     }
 
@@ -256,12 +264,15 @@ public class patrol : AI_Agent
         if (seconds < timerAttack1)
         {
             seconds += Time.deltaTime;
+            Debug.Log("Attack1");
+            attacked = true;
             //Attack1
         }
-        else
+        else if (seconds >= timerAttack1 || attacked)
         {
-            seconds = 0f;
+            Debug.Log("Going idle battle 1");
             setState(getState("battle"));
+
         }
     }
 
@@ -272,11 +283,13 @@ public class patrol : AI_Agent
         if (seconds < timerAttack2)
         {
             seconds += Time.deltaTime;
+            Debug.Log("Attack 2");
+            attacked = true;
             //Attack2
         }
-        else
+        else if (seconds >= timerAttack2 || attacked)
         {
-            seconds = 0f;
+            Debug.Log("Going idle battle 2");
             setState(getState("battle"));
         }
     }
@@ -284,27 +297,29 @@ public class patrol : AI_Agent
     void combo1()
     {
         gizmoColor = Color.black;
+        float timerCombo = timerAttack1 + timerAttack2;
+        bool attacked1 = attacked;
 
-        float actualPercent;
-
-        if (seconds > timerCombo1)
+        if (seconds < timerCombo)
         {
             seconds += Time.deltaTime;
-            actualPercent = seconds * 100 / timerCombo1;
 
-            //if(seconds >= 0.3 * (timerCombo1 + timerAttack2) && seconds <= 0.5
-            if (actualPercent <= 30)
+            if(seconds <= 0.3 * timerCombo)
             {
                 //Attack1
+                Debug.Log("Combo 1");
+                attacked1 = true;
             }
-            else if (actualPercent >= 50)
+            else if (seconds >= 0.5f * timerCombo || attacked1)
             {
+                Debug.Log("Combo 2");
+                attacked = true;
                 //Attack2
             }
         }
-        else
+        else if (seconds >= timerCombo || attacked)
         {
-            seconds = 0f;
+            Debug.Log("Going idle battle combo");
             setState(getState("battle"));
         }
     }
@@ -321,7 +336,7 @@ public class patrol : AI_Agent
         initState("battle", idleBattle);
         initState("stay", stayStill);
         initState("orbit", orbit);
-        initState("fight", orbit);
+        initState("fight", fight);
 
         setState(getState("idle"));
     }
