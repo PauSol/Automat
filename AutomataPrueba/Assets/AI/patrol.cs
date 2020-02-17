@@ -265,8 +265,12 @@ public class patrol : AI_Agent
         {
             seconds += Time.deltaTime;
             Debug.Log("Attack1");
+            DamageMessage m = new DamageMessage(transform, player, typeof(life), 10);
+            MessageManager.get().SendMessage(m);
             attacked = true;
             //Attack1
+
+            
         }
         else if (seconds >= timerAttack1 || attacked)
         {
@@ -284,6 +288,8 @@ public class patrol : AI_Agent
         {
             seconds += Time.deltaTime;
             Debug.Log("Attack 2");
+            DamageMessage m = new DamageMessage(transform, player, typeof(life), 15);
+            MessageManager.get().SendMessage(m);
             attacked = true;
             //Attack2
         }
@@ -308,11 +314,15 @@ public class patrol : AI_Agent
             {
                 //Attack1
                 Debug.Log("Combo 1");
+                DamageMessage m = new DamageMessage(transform, player, typeof(life), 10);
+                MessageManager.get().SendMessage(m);
                 attacked1 = true;
             }
             else if (seconds >= 0.5f * timerCombo || attacked1)
             {
                 Debug.Log("Combo 2");
+                DamageMessage m = new DamageMessage(transform, player, typeof(life), 20);
+                MessageManager.get().SendMessage(m);
                 attacked = true;
                 //Attack2
             }
